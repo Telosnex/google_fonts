@@ -264,6 +264,22 @@ void main() {
     verify(mockHttpClient.gets(any)).called(2);
   });
 
+  test('fontBytesTransform changes the registered bytes, not the cache', () async {
+    final seen = <(String, int)>[];
+    GoogleFonts.config.fontBytesTransform = (String family, ByteData bytes) {
+      seen.add((family, bytes.lengthInBytes));
+      return ByteData(4);
+    };
+    addTearDown(() => GoogleFonts.config.fontBytesTransform = null);
+
+    await loadFontIfNecessary(fakeDescriptor);
+    await Future<void>.delayed(const Duration(seconds: 1), () {});
+
+    expect(seen, [(fakeDescriptor.familyWithVariant.family, _fakeResponseLengthInBytes)]);
+    final cached = (await getApplicationSupportDirectory()).listSync().single as File;
+    expect(cached.lengthSync(), _fakeResponseLengthInBytes);
+  });
+
   test('loadFontIfNecessary method correctly stores in cache', () async {
     Directory directoryContents = await getApplicationSupportDirectory();
     expect(directoryContents.listSync().isEmpty, isTrue);

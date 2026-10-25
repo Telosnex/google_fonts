@@ -150,7 +150,7 @@ Future<void> loadFontIfNecessary(GoogleFontsDescriptor descriptor) async {
       byteData = rootBundle.load(assetPath);
     }
     if (await byteData != null) {
-      return await loadFontByteData(familyWithVariantString, byteData);
+      return await loadFontByteData(familyWithVariantString, _transformed(descriptor, byteData));
     }
 
     // Check if this font can be loaded from the device file system.
@@ -160,14 +160,14 @@ Future<void> loadFontIfNecessary(GoogleFontsDescriptor descriptor) async {
     );
 
     if (await byteData != null) {
-      return await loadFontByteData(familyWithVariantString, byteData);
+      return await loadFontByteData(familyWithVariantString, _transformed(descriptor, byteData));
     }
 
     // Attempt to load this font via http, unless disallowed.
     if (sharedGoogleFontsConfig.allowRuntimeFetching) {
       byteData = _httpFetchFontAndSaveToDevice(familyWithVariantString, descriptor.file);
       if (await byteData != null) {
-        return await loadFontByteData(familyWithVariantString, byteData);
+        return await loadFontByteData(familyWithVariantString, _transformed(descriptor, byteData));
       }
     } else {
       throw Exception(
@@ -199,6 +199,15 @@ Future<void> loadFontIfNecessary(GoogleFontsDescriptor descriptor) async {
     );
     rethrow;
   }
+}
+
+Future<ByteData?> _transformed(GoogleFontsDescriptor descriptor, Future<ByteData?>? byteData) async {
+  final ByteData? data = await byteData;
+  final transform = sharedGoogleFontsConfig.fontBytesTransform;
+  if (data == null || transform == null) {
+    return data;
+  }
+  return transform(descriptor.familyWithVariant.family, data);
 }
 
 /// Loads a font with [FontLoader], given its name and byte-representation.

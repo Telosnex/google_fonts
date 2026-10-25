@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:flutter/services.dart' show ByteData;
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
 
@@ -18,6 +19,16 @@ class GoogleFontsConfig {
   ///
   /// If you supply a client, you are responsible for closing it.
   http.Client? httpClient;
+
+  /// Changes the bytes of each font file before it is registered.
+  ///
+  /// Called with the family name (for example `Tenali Ramakrishna`) and the
+  /// verified file, from the asset bundle, the device cache, or the network.
+  /// The cached file is not changed. Return [bytes] to keep the font as is.
+  ///
+  /// Set it before the first font loads: a font that has loaded keeps its
+  /// bytes until [clearCache]. Telosnex fork.
+  ByteData Function(String family, ByteData bytes)? fontBytesTransform;
 }
 
 /// Deprecated. Use [GoogleFontsConfig] instead.
