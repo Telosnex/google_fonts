@@ -106,7 +106,9 @@ TextStyle googleFontsTextStyle({
 
   final Future<void> loadingFuture = loadFontIfNecessary(descriptor);
   pendingFontFutures.add(loadingFuture);
-  loadingFuture.whenComplete(() => pendingFontFutures.remove(loadingFuture)).ignore();
+  loadingFuture
+      .whenComplete(() => pendingFontFutures.remove(loadingFuture))
+      .ignore();
 
   return textStyle.copyWith(
     fontFamily: familyWithVariant.toString(),
@@ -150,7 +152,10 @@ Future<void> loadFontIfNecessary(GoogleFontsDescriptor descriptor) async {
       byteData = rootBundle.load(assetPath);
     }
     if (await byteData != null) {
-      return await loadFontByteData(familyWithVariantString, _transformed(descriptor, byteData));
+      return await loadFontByteData(
+        familyWithVariantString,
+        _transformed(descriptor, byteData),
+      );
     }
 
     // Check if this font can be loaded from the device file system.
@@ -160,14 +165,23 @@ Future<void> loadFontIfNecessary(GoogleFontsDescriptor descriptor) async {
     );
 
     if (await byteData != null) {
-      return await loadFontByteData(familyWithVariantString, _transformed(descriptor, byteData));
+      return await loadFontByteData(
+        familyWithVariantString,
+        _transformed(descriptor, byteData),
+      );
     }
 
     // Attempt to load this font via http, unless disallowed.
     if (sharedGoogleFontsConfig.allowRuntimeFetching) {
-      byteData = _httpFetchFontAndSaveToDevice(familyWithVariantString, descriptor.file);
+      byteData = _httpFetchFontAndSaveToDevice(
+        familyWithVariantString,
+        descriptor.file,
+      );
       if (await byteData != null) {
-        return await loadFontByteData(familyWithVariantString, _transformed(descriptor, byteData));
+        return await loadFontByteData(
+          familyWithVariantString,
+          _transformed(descriptor, byteData),
+        );
       }
     } else {
       throw Exception(
@@ -201,7 +215,10 @@ Future<void> loadFontIfNecessary(GoogleFontsDescriptor descriptor) async {
   }
 }
 
-Future<ByteData?> _transformed(GoogleFontsDescriptor descriptor, Future<ByteData?>? byteData) async {
+Future<ByteData?> _transformed(
+  GoogleFontsDescriptor descriptor,
+  Future<ByteData?>? byteData,
+) async {
   final ByteData? data = await byteData;
   final transform = sharedGoogleFontsConfig.fontBytesTransform;
   if (data == null || transform == null) {
@@ -212,7 +229,10 @@ Future<ByteData?> _transformed(GoogleFontsDescriptor descriptor, Future<ByteData
 
 /// Loads a font with [FontLoader], given its name and byte-representation.
 @visibleForTesting
-Future<void> loadFontByteData(String familyWithVariantString, Future<ByteData?>? byteData) async {
+Future<void> loadFontByteData(
+  String familyWithVariantString,
+  Future<ByteData?>? byteData,
+) async {
   if (byteData == null) {
     return;
   }
@@ -252,7 +272,10 @@ GoogleFontsVariant _closestMatch(
 /// it is the first time it is being loaded.
 ///
 /// This function can return `null` if the font fails to load from the URL.
-Future<ByteData> _httpFetchFontAndSaveToDevice(String fontName, GoogleFontsFile file) async {
+Future<ByteData> _httpFetchFontAndSaveToDevice(
+  String fontName,
+  GoogleFontsFile file,
+) async {
   final Uri? uri = Uri.tryParse(file.url);
   if (uri == null) {
     throw Exception('Invalid fontUrl: ${file.url}');
@@ -267,7 +290,9 @@ Future<ByteData> _httpFetchFontAndSaveToDevice(String fontName, GoogleFontsFile 
   }
   if (response.statusCode == 200) {
     if (!_isFileSecure(file, response.bodyBytes)) {
-      throw Exception('File from ${file.url} did not match expected length and checksum.');
+      throw Exception(
+        'File from ${file.url} did not match expected length and checksum.',
+      );
     }
 
     _unawaited(
@@ -312,13 +337,18 @@ String? findFamilyWithVariantAssetPath(
   }
 
   final String apiFilenamePrefix = familyWithVariant.toApiFilenamePrefix();
-  final fileTypes = isWeb ? ['.woff2', '.woff', '.ttf', '.otf'] : ['.ttf', '.otf'];
+  final fileTypes = isWeb
+      ? ['.woff2', '.woff', '.ttf', '.otf']
+      : ['.ttf', '.otf'];
 
   // Iterate by file type priority, ensuring preferred formats are selected.
   for (final fileType in fileTypes) {
     for (final String asset in manifestValues) {
       if (asset.endsWith(fileType)) {
-        final String assetWithoutExtension = asset.substring(0, asset.length - fileType.length);
+        final String assetWithoutExtension = asset.substring(
+          0,
+          asset.length - fileType.length,
+        );
         if (assetWithoutExtension.endsWith(apiFilenamePrefix)) {
           return asset;
         }
@@ -332,7 +362,8 @@ String? findFamilyWithVariantAssetPath(
 bool _isFileSecure(GoogleFontsFile file, Uint8List bytes) {
   final int actualFileLength = bytes.length;
   final actualFileHash = sha256.convert(bytes).toString();
-  return file.expectedLength == actualFileLength && file.expectedFileHash == actualFileHash;
+  return file.expectedLength == actualFileLength &&
+      file.expectedFileHash == actualFileHash;
 }
 
 void _unawaited(Future<void> future) {}
