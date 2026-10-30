@@ -295,12 +295,19 @@ Future<ByteData> _httpFetchFontAndSaveToDevice(
       );
     }
 
+    // Caching is best effort: the font is already loaded from memory, so a
+    // failed write (no path_provider, full disk, permissions) must not
+    // surface as an uncaught async error.
     _unawaited(
-      file_io.saveFontToDeviceFileSystem(
-        name: fontName,
-        fileHash: file.expectedFileHash,
-        bytes: response.bodyBytes,
-      ),
+      file_io
+          .saveFontToDeviceFileSystem(
+            name: fontName,
+            fileHash: file.expectedFileHash,
+            bytes: response.bodyBytes,
+          )
+          .catchError((Object e) {
+            debugPrint('google_fonts: could not cache $fontName: $e');
+          }),
     );
 
     return ByteData.view(response.bodyBytes.buffer);
